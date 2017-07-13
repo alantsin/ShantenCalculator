@@ -1,0 +1,6 @@
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\bin\Debug\ShantenCalculator.exe.config
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\bin\Debug\ShantenCalculator.exe
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\bin\Debug\ShantenCalculator.pdb
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\obj\Debug\ShantenCalculator.csprojResolveAssemblyReference.cache
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\obj\Debug\ShantenCalculator.exe
+C:\Users\Alan\Desktop\git\ShantenCalculator\ShantenCalculator\obj\Debug\ShantenCalculator.pdb
