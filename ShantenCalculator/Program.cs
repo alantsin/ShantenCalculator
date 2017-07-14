@@ -10,8 +10,12 @@ namespace ShantenCalculator
     {
         static void Main(string[] args)
         {
-            // Creates an initial hand, to be replaced with actual hand creation function
-            Tile[] hand = Make9Gates();
+            // Creates an initial hand
+            HandGenerator handGenerator = new HandGenerator();
+
+            Console.WriteLine("Welcome to Monkey Mahjong! To begin, enter the type of hand");
+
+            Tile[] hand = handGenerator.make(Console.ReadLine().ToLower());
 
             Console.WriteLine("Showing initial hand:");
 
@@ -39,58 +43,42 @@ namespace ShantenCalculator
 
             Console.WriteLine("");
 
-            // Checks for Shanten, to be replaced
-            CheckSame(hand[0], hand[13]);
+            // Check for Shanten, work in progress
+            // First create a list of all potentials pairs of eyes
+            List<int[]> pairList = CheckPairs(hand);
+            int numPairs = pairList.Count;
+            Console.WriteLine(numPairs);
+
+            // Finish with point calculation
             Console.WriteLine("Tsumo! 9 Gates, 48,000 all, 16,000 each");
-
-        }
-
-        // Makes a starting hand of 9-way wait of 9 gates and returns that hand, for testing purposes
-        public static Tile[] Make9Gates()
-        {
-            Tile[] hand = new Tile[14];
-
-            hand[0] = new Tile(1, TileType.MAN);
-
-            hand[1] = new Tile(1, TileType.MAN);
-
-            hand[2] = new Tile(1, TileType.MAN);
-
-            hand[3] = new Tile(2, TileType.MAN);
-
-            hand[4] = new Tile(3, TileType.MAN);
-
-            hand[5] = new Tile(4, TileType.MAN);
-
-            hand[6] = new Tile(5, TileType.MAN);
-
-            hand[7] = new Tile(6, TileType.MAN);
-
-            hand[8] = new Tile(7, TileType.MAN);
-
-            hand[9] = new Tile(8, TileType.MAN);
-
-            hand[10] = new Tile(9, TileType.MAN);
-
-            hand[11] = new Tile(9, TileType.MAN);
-
-            hand[12] = new Tile(9, TileType.MAN);
-
-            return hand;
+            
         }
 
         // Draws a tile from the wall, for now the tile is manually coded in and not random
         public static Tile DrawTile()
         {
-            Tile tile = new Tile(9, TileType.MAN);
+            Tile tile = new Tile(7, TileType.HON);
             return tile;
         }
 
-        // Checks the entire hand, returning an array of tile pairs
-        public static Tile[][] CheckPairs(Tile[] hand)
+        // Checks the entire hand, returning an array of pair indices
+        public static List<int[]> CheckPairs(Tile[] hand)
         {
-            Tile[][] eyes = new Tile[7][];
-            return eyes;
+            List<int[]> pairList = new List<int[]>();
+ 
+            for (int i = 0; i < hand.Length; i++)
+            {
+                for (int j = i+1; j < hand.Length; j++)
+                {
+                    if (CheckSame(hand[i], hand[j]))
+                    {
+                        pairList.Add(new int[] { i, j });
+                    }
+        
+                }
+            }
+
+            return pairList;
         }
 
         // Check if two tiles are the same
