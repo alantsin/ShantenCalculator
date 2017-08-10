@@ -29,126 +29,281 @@ namespace ShantenCalculator
 
             Console.WriteLine("");
 
-            Console.WriteLine("Press any key to draw...");
+            Console.WriteLine("Draw what type of tile?");
 
-            Console.ReadKey();
+            TileType type = (TileType) Enum.Parse(typeof(TileType), Console.ReadLine().ToUpper());
+
+            Console.WriteLine("What value of " + type + "?");
+
+            int value = Int32.Parse(Console.ReadLine());
 
             // Draws a tile
-            hand[13] = DrawTile();
+            DrawTile(hand, value, type);
 
-            Console.WriteLine("Showing new hand:");
-
-            for (int i = 0; i < 14; i++)
-            {
-                Console.Write(hand[i].Print());
-            }
+            PrintTiles("Showing new hand:", hand);
 
             Console.WriteLine("");
 
             // Check for Shanten, work in progress
-            // First create a list of all potentials pairs of eyes
-            List<int[]> pairList = CheckPairs(hand);
-            int numPairs = pairList.Count;
-            Console.WriteLine(numPairs);
+            // First remove all groups, pon and chi
 
-            // With the pairs list, check for all Pon and Chi
-            List<Tile> tempHand = CheckMelds(pairList, hand);
-
-            // Finish with point calculation
-            Console.WriteLine("Tsumo! 9 Gates, 48,000 all, 16,000 each");
-            
-        }
-
-        public static List<Tile> CheckMelds(List<int[]> pairList, Tile[] hand)
-        {
             // This list holds all melds
             List<Tile> tempHand = new List<Tile>();
 
+            // Indices of the meld
+            List<int[]> tempIndexGroup = new List<int[]>();
+            int pons = 0;
+            int chis = 0;
+
+            // Index of the particular tile
+            List<int> tempIndex = new List<int>();
+
             // Check for Pon
-            pairList.ForEach(delegate (int[] eyes) {
-
-                int eye1 = eyes[0];
-                int eye2 = eyes[1];
-
-                for (int i = 0; i < hand.Length; i++)
+            Boolean loopBreak = false;
+            for (int i = 0; i < hand.Length; i++)
+            {
+                if (tempIndex.Contains(i))
                 {
-                    if (i != eye1 || i != eye2)
+                    continue;
+                }
+
+                for (int j = i + 1; j < hand.Length; j++)
+                {
+                    if (loopBreak)
                     {
-                        for (int j = i + 1; j < hand.Length; j++)
+                        loopBreak = false;
+                        break;
+                    }
+
+                    if (hand[i].value.Equals(hand[j].value) && hand[i].type.Equals(hand[j].type))
+                    {
+                        for (int k = j + 1; k < hand.Length; k++)
                         {
-                            if (hand[i].value.Equals(hand[j].value) && hand[i].type.Equals(hand[j].type))
+                            if (!tempIndex.Contains(k))
                             {
-                                for (int k = j + 1; k < hand.Length; k++)
+                                if (hand[j].value.Equals(hand[k].value) && hand[j].type.Equals(hand[k].type))
                                 {
-                                    if (hand[j].value.Equals(hand[k].value) && hand[j].type.Equals(hand[k].type))
-                                    {
-                                        tempHand.Add(hand[i]);
-                                        tempHand.Add(hand[j]);
-                                        tempHand.Add(hand[k]);
-                                    }
+                                    tempIndexGroup.Add(new int[] { i, j, k });
+                                    pons++;
+                                    tempIndex.Add(i);
+                                    tempIndex.Add(j);
+                                    tempIndex.Add(k);
+                                    loopBreak = true;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
 
-            });
+            }
+
+            Tile[] handAfterPon = new Tile[14 - (pons * 3)];
+
+            // Temp index
+            int x = 0;
+
+            for (int i = 0; i < hand.Length; i++)
+            {
+                if (!tempIndex.Contains(i))
+                {
+                    handAfterPon[x] = hand[i];
+                    x++;
+                }
+            }
+
+            PrintTiles("Showing hand after removing pons:", handAfterPon);
+
+            Console.WriteLine(pons + " pons");
 
             // Check for Chi
 
-            return tempHand;
+            loopBreak = false;
+            for (int i = 0; i < handAfterPon.Length; i++)
+            {
+                if (tempIndex.Contains(i) || handAfterPon[i].type.Equals(TileType.HON))
+                {
+                    continue;
+                }
+
+                for (int j = i + 1; j < hand.Length; j++)
+                {
+                    if (loopBreak)
+                    {
+                        loopBreak = false;
+                        break;
+                    }
+
+                    if (hand[i].value.Equals(hand[j].value - 1) && hand[i].type.Equals(hand[j].type))
+                    {
+                        for (int k = j + 1; k < hand.Length; k++)
+                        {
+                            if (!tempIndex.Contains(k))
+                            {
+                                if (hand[j].value.Equals(hand[k].value - 1) && hand[j].type.Equals(hand[k].type))
+                                {
+                                    tempIndexGroup.Add(new int[] { i, j, k });
+                                    chis++;
+                                    tempIndex.Add(i);
+                                    tempIndex.Add(j);
+                                    tempIndex.Add(k);
+                                    loopBreak = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            Tile[] handAfterChi = new Tile[handAfterPon.Length - (chis * 3)];
+
+            // Temp index
+            x = 0;
+
+            for (int i = 0; i < hand.Length; i++)
+            {
+                if (!tempIndex.Contains(i))
+                {
+                    handAfterChi[x] = hand[i];
+                    x++;
+                }
+            }
+
+            PrintTiles("Showing hand after removing chis:", handAfterChi);
+
+            Console.WriteLine(chis + " chis");
+
+            int numGroups = tempIndexGroup.Count;
+            Console.WriteLine(numGroups + " groups total");
+
+            // Next remove the pairs
+            List<int[]> pairList = new List<int[]>();
+            List<int> pairIndex = new List<int>();
+
+            // Generate list of eye combinations
+
+            for (int i = 0; i < handAfterChi.Length; i++)
+            {
+                for (int j = i + 1; j < handAfterChi.Length; j++)
+                {
+                    if (CheckSame(handAfterChi[i], handAfterChi[j]))
+                    {
+                        pairList.Add(new int[] { i, j });
+
+                        if (!pairIndex.Contains(i))
+                        {
+                            pairIndex.Add(i);
+                        }
+
+                        if (!pairIndex.Contains(j))
+                        {
+                            pairIndex.Add(j);
+                        }
+                        i++;
+                        j++;
+                        break;
+                    }
+
+                }
+            }
+
+            // Make new hand after removing pairs
+
+            Tile[] handAfterPairs = new Tile[handAfterChi.Length - (pairList.Count * 2)];
+
+            x = 0;
+
+            for (int i = 0; i < handAfterChi.Length; i++)
+            {
+                if (!pairIndex.Contains(i))
+                {
+                    handAfterPairs[x] = handAfterChi[i];
+                    x++;
+                }
+            }
+
+            int numPairs = pairList.Count;
+            Console.WriteLine(numPairs + " pairs total");
+
+            PrintTiles("Showing hand after removing pairs:", handAfterPairs);
+
+            // Finally remove taatsu
+
+            List<int[]> taatsuList = new List<int[]>();
+            List<int> taatsuIndex = new List<int>();
+
+            // Generate list of eye combinations
+
+            for (int i = 0; i < handAfterPairs.Length; i++)
+            {
+                for (int j = i + 1; j < handAfterPairs.Length; j++)
+                {
+                    if (CheckRelated(handAfterPairs[i], handAfterPairs[j]))
+                    {
+                        taatsuList.Add(new int[] { i, j });
+
+                        if (!taatsuIndex.Contains(i))
+                        {
+                            taatsuIndex.Add(i);
+                        }
+
+                        if (!taatsuIndex.Contains(j))
+                        {
+                            taatsuIndex.Add(j);
+                        }
+                        i++;
+                        j++;
+                        break;
+                    }
+
+                }
+            }
+
+            // Make new hand after removing pairs
+
+            Tile[] handAfterTaatsu = new Tile[handAfterPairs.Length - (taatsuList.Count * 2)];
+
+            x = 0;
+
+            for (int i = 0; i < handAfterPairs.Length; i++)
+            {
+                if (!taatsuIndex.Contains(i))
+                {
+                    handAfterTaatsu[x] = handAfterPairs[i];
+                    x++;
+                }
+            }
+
+            int numTaatsu = taatsuList.Count;
+            Console.WriteLine(numTaatsu + " taatsu total");
+
+            PrintTiles("Showing hand after removing taatsu:", handAfterTaatsu);
+
+            if (handAfterTaatsu.Length > 0)
+            {
+                shantenCount = ShantenCount(numGroups, numPairs, numTaatsu, handAfterTaatsu.Length);
+            }
+
+            else
+            {
+                shantenCount = -1;
+            }
+
+            Console.WriteLine("Shanten count: " + shantenCount);
+
+
+            // Finish with point calculation
+         //   Console.WriteLine("Tsumo! 9 Gates, 48,000 all, 16,000 each");
+            
         }
 
         // Draws a tile from the wall, for now the tile is manually coded in and not random
-        public static Tile DrawTile()
+        public static void DrawTile(Tile[] hand, int value, TileType type)
         {
-            Tile tile = new Tile(9, TileType.MAN);
-            return tile;
-        }
-
-        // Checks the entire hand, returning an array of pair indices
-        public static List<int[]> CheckPairs(Tile[] hand)
-        {
-            List<int[]> pairList = new List<int[]>();
-
-            // Generate list of eye combinations
- 
-            for (int i = 0; i < hand.Length; i++)
-            {
-                for (int j = i+1; j < hand.Length; j++)
-                {
-                    if (CheckSame(hand[i], hand[j]))
-                    {
-                        pairList.Add(new int[] { i, j });
-                    }
-        
-                }
-            }
-
-            // Remove duplicates
-            List<int> tempIndex = new List<int>() ;
-            for (int i = 0; i < pairList.Count; i++)
-            {
-                for (int j = i+1; j < pairList.Count; j++)
-                {
-                    if (hand[pairList.ElementAt(i)[0]].value.Equals(hand[pairList.ElementAt(j)[0]].value) &&
-                        hand[pairList.ElementAt(i)[0]].type.Equals(hand[pairList.ElementAt(j)[0]].type))
-                    {
-                        if (!tempIndex.Contains(i))
-                        {
-                            tempIndex.Add(i);
-                        }
-                        
-                    }
-                }
-            }
-
-            for (int i = tempIndex.Count; i > 0; i--)
-            {
-                pairList.RemoveAt(i);
-            }
-
-            return pairList;
+            Tile tile = new Tile(value, type);
+            hand[13] = tile;
         }
 
         // Check if two tiles are the same
@@ -161,5 +316,52 @@ namespace ShantenCalculator
 
             return false;
         }
+
+        // Check if two tiles are related
+        public static Boolean CheckRelated(Tile tile1, Tile tile2)
+        {
+            if (tile1.type.Equals(TileType.HON))
+            {
+                return false;
+            }
+
+            if (tile1.type.Equals(tile2.type))
+            {
+                if ((tile1.value.Equals(tile2.value - 1) || tile1.value.Equals(tile2.value - 2)) &&
+                tile1.type.Equals(tile2.type))
+                {
+                    return true;
+                }
+
+            }
+
+            return false;
+        }
+
+        // Function to print tiles on screen
+        public static void PrintTiles(String text, Tile[] hand)
+        {
+            Console.WriteLine(text);
+
+            // Prints to console the initial hand
+            for (int i = 0; i < hand.Length; i++)
+            {
+                Console.Write(hand[i].Print());
+            }
+
+            Console.WriteLine("");
+        }
+
+        // Calculate Shanten
+        public static int ShantenCount(int groups, int pairs, int taatsu, int handSize)
+        {
+
+            int part1 = 8 - (2 * groups);
+            int part2 = Math.Max((pairs + taatsu), (int)Math.Ceiling((double)(handSize / 3)));
+            int part3 = Math.Min(1, Math.Max(0, ((pairs + taatsu) - (4 - groups))));
+
+            return Math.Min((part1 - part2), 6);
+        }
+
     }
 }
